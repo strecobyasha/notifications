@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # Scheduler
+  app:
+    build:
+      context: .
+      dockerfile: ./scheduler/Dockerfile
+    container_name: scheduler
+    profiles:
+      - scheduler
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file: .env
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: redis
+    restart: unless-stopped
+    profiles:
+      - scheduler
+    ports:
+      - ${REDIS_PORT}:6379
+    healthcheck:
+      test: [ "CMD", "redis-cli","ping" ]
+      interval: 3s
+      timeout: 2s
+      retries: 50
+
+  # Broker
+  rabbit:
+    image: heidiks/rabbitmq-delayed-message-exchange:latest
+    container_name: rabbit
+    profiles:
+      - broker
+    ports:
+      - 5672:5672
+      - 15672:15672
+      - 25672:25672
+
+  # Worker
+  messages_history:
+    image: postgres:14.3
+    container_name: messages_history
+    profiles:
+      - worker
+      - notifications
+      - db
+    env_file: .env
+    environment:
+      - POSTGRES_DB=${HISTORY_DB_NAME}
+      - POSTGRES_USER=${HISTORY_DB_USER}
+      - POSTGRES_PASSWORD=${HISTORY_DB_PASSWORD}
+    ports:
+      - ${HISTORY_DB_PORT}:5432
+    restart: unless-stopped
+    volumes:
+      - history:/var/lib/postgresql/data
+      - ./worker/storage/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: pg_isready -U ${HISTORY_DB_USER} -D ${HISTORY_DB_NAME} > /dev/null; if [[ $$? == 0 ]]; then echo 0; else echo 1; fi
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    profiles:
+      - worker
+      - notifications
+      - mailhog
+    ports:
+      - 1025:1025
+      - 8025:8025
+
+  # Postgres
+
+volumes:
+  history:
