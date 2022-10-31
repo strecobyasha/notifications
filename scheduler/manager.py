@@ -1,7 +1,8 @@
 """
 Main file for creating a newsletter.
-
 """
+
+import asyncio
 
 from mock.mock import MockService
 from src.sender import Sender
@@ -29,7 +30,10 @@ class Manager:
         # Create announcement for the week and send one message to the broker for all users.
         announcement = Announcement(service)
         matches = announcement.create_message()
-        self.sender.send_one(broker, queue, matches)
+
+        loop = asyncio.get_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self.sender.send_one(broker, queue, matches))
 
     @broker_injector(exchange=exchanges.SCHEDULER, queue=scheduler_email_queues.STATS)
     def user_stats(
@@ -45,15 +49,12 @@ class Manager:
 
     def send_many(self, broker: BaseBroker, queue: str, messages: iter) -> None:
         # Sending a group of messages to the broker.
+        loop = asyncio.get_event_loop()
+        asyncio.set_event_loop(loop)
         while True:
             try:
                 batch = next(messages)
             except StopIteration:
                 break
             else:
-                self.sender.send_many(broker, queue, batch)
-
-
-if __name__ == '__main__':
-    manager = Manager()
-    manager.user_stats()
+                loop.run_until_complete(self.sender.send_many(broker, queue, batch))

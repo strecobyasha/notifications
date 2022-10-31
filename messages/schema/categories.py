@@ -1,6 +1,5 @@
 """
 Messages groups.
-
 """
 
 from enum import Enum

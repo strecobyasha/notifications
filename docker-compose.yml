@@ -2,13 +2,14 @@ version: '3.8'
 
 services:
   # Scheduler
-  app:
+  scheduler:
     build:
       context: .
       dockerfile: ./scheduler/Dockerfile
     container_name: scheduler
     profiles:
       - scheduler
+      - notifications
     depends_on:
       redis:
         condition: service_healthy
@@ -20,6 +21,7 @@ services:
     restart: unless-stopped
     profiles:
       - scheduler
+      - notifications
     ports:
       - ${REDIS_PORT}:6379
     healthcheck:
@@ -34,12 +36,23 @@ services:
     container_name: rabbit
     profiles:
       - broker
+      - notifications
     ports:
       - 5672:5672
       - 15672:15672
       - 25672:25672
 
   # Worker
+  worker:
+    build:
+      context: .
+      dockerfile: ./worker/Dockerfile
+    container_name: worker
+    profiles:
+      - worker
+      - notifications
+    env_file: .env
+
   messages_history:
     image: postgres:14.3
     container_name: messages_history

@@ -2,18 +2,18 @@ import asyncio
 from datetime import datetime
 
 from aio_pika.abc import AbstractIncomingMessage
+from core.settings import consumer_settings
+from mock.user_data import UserMockData
 from orjson import orjson
 from pamqp.commands import Basic
+from src.sender import MessagesSender
+from storage.models.models import EmailMessage
+from storage.src.saver import MessagesSaver
 
 from broker.base import BaseBroker
-from messages.schema.statuses import Statuses
 from messages.schema.senders import Senders
+from messages.schema.statuses import Statuses
 from utils.injectors import broker_injector
-from worker.mock.user_data import UserMockData
-from worker.core.settings import consumer_settings
-from worker.storage.src.saver import MessagesSaver
-from worker.src.sender import MessagesSender
-from worker.storage.models.models import EmailMessage
 
 
 class Consumer:
@@ -39,13 +39,15 @@ class Consumer:
         First, check users timezones to not disturb them at night.
         In some cases the field recipients may be empty. It means, that we need to send
         messages to all users. But some of them may not be happy to receive it right now.
-        Thus, we get to mailing lists: one for delayed messages (we will send them back
+        Thus, we get two mailing lists: one for delayed messages (we will send them back
         to the broker) and one for further check.
         """
         message_as_dict = orjson.loads(message.body)
+
         check_timezone = message_as_dict['check_timezone']
         check_relevance = message_as_dict['check_relevance']
         recipients_to_send = message_as_dict['recipients']
+
         if check_timezone:
             recipients_to_send, recipients_to_send_back = await self.check_user_settings(recipients_to_send)
             if recipients_to_send_back:
@@ -55,7 +57,8 @@ class Consumer:
             if recipients_to_cancel:
                 await self.cancel_sending(message=message_as_dict, recipients=recipients_to_cancel)
 
-        await self.send_message_to_user(message=message_as_dict, recipients=recipients_to_send)
+        emails = self.user_data_service.user_email(recipients_to_send)
+        await self.send_message_to_user(message=message_as_dict, recipients=emails)
 
     async def check_user_settings(self, recipients: list) -> tuple[set, dict]:
         # Check users timezones.

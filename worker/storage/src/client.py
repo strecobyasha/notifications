@@ -1,13 +1,12 @@
 """
-Подключение к БД для сохранения сообщений.
+Establish database connection to save messages history.
 
 """
 
 import psycopg2
 from psycopg2.extensions import connection as _connection
 from psycopg2.extras import execute_values
-
-from worker.storage.logger.logger import saver_logger
+from storage.logger.logger import saver_logger
 
 
 class StorageClient:
@@ -26,6 +25,6 @@ class StorageClient:
         try:
             execute_values(self.curs, query, data)
         except Exception as error:
-            saver_logger.error(f'Данные не были сохранены, {error}')
+            saver_logger.error(f'Data was not saved, {error}')
         else:
             self.conn.commit()

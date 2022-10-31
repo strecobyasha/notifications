@@ -1,7 +1,7 @@
 """
 Models for messages, that were sent via Admin Panel.
-
 """
+
 from pydantic import Field
 
 from messages.schema.categories import AdminMessageTypes

@@ -1,16 +1,14 @@
 """
-Сохранение сообщений в БД истории.
-
+Save data to the messages history database.
 """
 
 from contextlib import contextmanager
 
 import psycopg2
 from psycopg2.extras import DictCursor
-
-from worker.storage.core.settings import storage_settings
-from worker.storage.models.models import EmailMessage
-from worker.storage.src.client import StorageClient
+from storage.core.settings import storage_settings
+from storage.models.models import EmailMessage
+from storage.src.client import StorageClient
 
 
 @contextmanager

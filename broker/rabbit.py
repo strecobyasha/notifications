@@ -2,8 +2,8 @@ import asyncio
 from typing import Union
 
 import backoff
-from aio_pika import Message, DeliveryMode, connect_robust
-from aiormq import ConnectionClosed, ChannelInvalidStateError
+from aio_pika import DeliveryMode, Message, connect_robust
+from aiormq import ChannelInvalidStateError, ConnectionClosed
 from pamqp.commands import Basic
 
 from broker.core.settings import backoff_config, broker_settings
@@ -38,6 +38,8 @@ class Rabbit:
         self.exchange = await self.channel.declare_exchange(name=exchange_name)
 
     async def create_queue(self, queue_name: str):
+        # Create two queues: the main queue and reserve one without consumer, where
+        # messages could spend some time, waiting when they are in demand.
         queue = await self.channel.declare_queue(queue_name, durable=True)
         await queue.bind(exchange=self.exchange.name)
 
@@ -53,9 +55,8 @@ class Rabbit:
 
     async def send(self, queue_name: str, message: bytes, expiration: int = 0) -> \
             Union[Basic.Ack, Basic.Nack, Basic.Reject, None]:
-        # If the expiration param was passed, message will be moved to delayed queue.
+        # If the expiration param was passed, message will be moved to the delayed queue.
         queue = f'{queue_name}{broker_settings.suffix}' if expiration else queue_name
-        print(message)
         try:
             return await self.exchange.publish(
                 Message(message, expiration=expiration, delivery_mode=DeliveryMode.PERSISTENT),

@@ -1,6 +1,5 @@
 """
 Creating task for newsletter about next matches.
-
 """
 
 from messages.producers.scheduler.models import AnnouncementMessage

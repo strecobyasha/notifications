@@ -2,14 +2,15 @@ import os
 import smtplib
 from datetime import datetime
 from email.message import EmailMessage
+
+from core.settings import sender_settings
 from jinja2 import Environment, FileSystemLoader
 from orjson import orjson
+from storage.models.models import EmailMessage as EmailMessageModel
+from storage.src.saver import MessagesSaver
 
-from messages.schema.statuses import Statuses
 from messages.schema.senders import Senders
-from worker.core.settings import sender_settings
-from worker.storage.models.models import EmailMessage as EmailMessageModel
-from worker.storage.src.saver import MessagesSaver
+from messages.schema.statuses import Statuses
 
 
 class MessagesSender:

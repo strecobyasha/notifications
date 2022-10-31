@@ -1,6 +1,7 @@
 """
 Mocking user and games data service.
 """
+
 import uuid
 
 

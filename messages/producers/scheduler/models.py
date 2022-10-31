@@ -1,14 +1,14 @@
 """
 Models for messages, that were sent via scheduler.
-
 """
+
 from pydantic import Field
 
 from messages.schema.categories import SchedulerMessageTypes
 from messages.schema.senders import Senders
-from .content import AnnouncementContent, StatsContent
 
 from ..base import BaseMessage
+from .content import AnnouncementContent, StatsContent
 
 
 class SchedulerBaseMessage(BaseMessage):

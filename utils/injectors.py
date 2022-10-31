@@ -1,8 +1,6 @@
 """
 Decorator that defines broker for Api, Admin Panel, Scheduler and Worker.
-
 """
-
 
 import functools
 

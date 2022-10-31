@@ -1,8 +1,8 @@
 """
 Models for messages, that were sent via Api.
-
 """
-from pydantic import Field, EmailStr
+
+from pydantic import Field
 
 from messages.schema.categories import ApiMessageTypes
 from messages.schema.senders import Senders

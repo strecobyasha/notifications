@@ -1,6 +1,5 @@
 """
 Messages sender.
-
 """
 
 import asyncio
@@ -15,25 +14,21 @@ from messages.producers.base import BaseMessage
 
 class Sender:
 
-    def send_one(self, broker: BaseBroker, queue: str, message: BaseMessage) -> None:
-        loop = asyncio.get_event_loop()
-        asyncio.set_event_loop(loop)
+    async def send_one(self, broker: BaseBroker, queue: str, message: BaseMessage) -> None:
         sent = None
         min_sleep = 0.1
         while type(sent) is not Basic.Ack:
-            sent = loop.run_until_complete(broker.send(queue, orjson.dumps(message.dict())))
+            sent = await broker.send(queue, orjson.dumps(message.dict()))
             type(sent) is Basic.Ack or time.sleep(min_sleep := min_sleep * 2)
 
-    def send_many(self, broker: BaseBroker, queue: str, messages: iter) -> None:
-        loop = asyncio.get_event_loop()
-        asyncio.set_event_loop(loop)
+    async def send_many(self, broker: BaseBroker, queue: str, messages: iter) -> None:
         messages_to_send = list(messages)
         min_sleep = 0.1
         while messages_to_send:
             # Send a batch of messages to the broker. Then get a response and check
             # if there are undelivered messages. Repeat sending only
             # not sent messages until the end of the world.
-            res = loop.run_until_complete(self.multiple_messages(broker, queue, messages_to_send))
+            res = await self.multiple_messages(broker, queue, messages_to_send)
             messages_to_send = list(
                 item[0] for item
                 in filter(lambda item: type(item[1]) is not Basic.Ack, zip(messages_to_send, res))

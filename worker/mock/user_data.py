@@ -1,4 +1,6 @@
-
+"""
+Mocking user data.
+"""
 
 class UserMockData:
 
@@ -10,5 +12,5 @@ class UserMockData:
         # Users for whom the data is still relevant.
         return users
 
-    def user_email(self):
-        pass
+    def user_email(self, users: set) -> set:
+        return {'mail@mail.com' for _ in users}
